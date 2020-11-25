@@ -43,11 +43,20 @@ spec:
               name: {{ template "harbor.test" . }}
               key: .docker-password
         {{- end }}
+        {{- if .Values.tests.imagesPullRepository }}
+        - name: HARBOR_TEST_IMAGES_REPOSITORY
+          value: {{ .Values.tests.imagesPullRepositor }}
+        {{- end }}
       volumeMounts:
         {{- if .Values.expose.tls.enabled }}
         - name: ca-download
           mountPath: /usr/share/pki/trust/anchors
           readOnly: true
+        {{- end }}
+        {{- if .Values.caBundleSecretName }}
+        - name: ca-bundle-certs
+          mountPath: /usr/share/pki/trust/anchors/custom-ca.crt
+          subPath: ca.crt
         {{- end }}
       securityContext:
         privileged: true
@@ -76,6 +85,9 @@ spec:
           - key: ca.crt
             path: ca.crt
       {{- end }}
+    {{- end }}
+    {{- if .Values.caBundleSecretName }}
+{{ include "harbor.caBundleVolume" . | indent 4 }}
     {{- end }}
   restartPolicy: Never
 {{- end }}
